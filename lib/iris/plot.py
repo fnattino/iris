@@ -587,14 +587,14 @@ def _fixup_dates(coord, values):
         # Convert coordinate values into tuples of
         # (year, month, day, hour, min, sec)
         dates = [coord.units.num2date(val).timetuple()[0:6] for val in values]
-        if coord.units.calendar == "gregorian":
+        if coord.units.calendar == "standard":
             r = [datetime.datetime(*date) for date in dates]
         else:
             try:
                 import nc_time_axis  # noqa: F401
             except ImportError:
                 msg = (
-                    "Cannot plot against time in a non-gregorian "
+                    "Cannot plot against time in a non-standard "
                     'calendar, because "nc_time_axis" is not available :  '
                     "Install the package from "
                     "https://github.com/SciTools/nc-time-axis to enable "
@@ -1344,11 +1344,6 @@ def outline(cube, coords=None, color="k", linewidth=None, axes=None):
         axes=axes,
     )
 
-    # set the _is_stroked property to get a single color grid.
-    # See https://github.com/matplotlib/matplotlib/issues/1302
-    result._is_stroked = False
-    if hasattr(result, "_wrapped_collection_fix"):
-        result._wrapped_collection_fix._is_stroked = False
     return result
 
 

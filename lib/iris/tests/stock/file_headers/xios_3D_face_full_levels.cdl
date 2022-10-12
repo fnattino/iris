@@ -42,7 +42,7 @@ variables:
 	double time_instant(time_counter) ;
 		time_instant:standard_name = "time" ;
 		time_instant:long_name = "Time axis" ;
-		time_instant:calendar = "gregorian" ;
+		time_instant:calendar = "standard" ;
 		time_instant:units = "seconds since 2016-01-01 15:00:00" ;
 		time_instant:time_origin = "2016-01-01 15:00:00" ;
 		time_instant:bounds = "time_instant_bounds" ;
@@ -58,8 +58,4 @@ variables:
 		:name = "${DATASET_NAME}" ;
 //		original name = "lfric_ngvat_3D_1t_full_level_face_grid_main_u3"
 		:Conventions = "UGRID" ;
-
-// data
-data:
-  time_instant = 0 ;
 }

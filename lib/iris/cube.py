@@ -185,6 +185,12 @@ class CubeList(list):
             )
             raise ValueError(msg)
 
+    def _repr_html_(self):
+        from iris.experimental.representation import CubeListRepresentation
+
+        representer = CubeListRepresentation(self)
+        return representer.repr_html()
+
     # TODO #370 Which operators need overloads?
 
     def __add__(self, other):
@@ -1011,6 +1017,30 @@ class Cube(CFVariableMixin):
 
         """
         return self._metadata_manager._names
+
+    def _dimensional_metadata(self, name_or_dimensional_metadata):
+        """
+        Return a single _DimensionalMetadata instance that matches the given
+        name_or_dimensional_metadata. If one is not found, raise an error.
+
+        """
+        found_item = None
+        for cube_method in [
+            self.coord,
+            self.cell_measure,
+            self.ancillary_variable,
+        ]:
+            try:
+                found_item = cube_method(name_or_dimensional_metadata)
+                if found_item:
+                    break
+            except KeyError:
+                pass
+        if not found_item:
+            raise KeyError(
+                f"{name_or_dimensional_metadata} was not found in {self}."
+            )
+        return found_item
 
     def is_compatible(self, other, ignore=None):
         """
@@ -2269,10 +2299,23 @@ class Cube(CFVariableMixin):
         return self._metadata_manager.cell_methods
 
     @cell_methods.setter
-    def cell_methods(self, cell_methods):
-        self._metadata_manager.cell_methods = (
-            tuple(cell_methods) if cell_methods else tuple()
-        )
+    def cell_methods(self, cell_methods: Iterable):
+        if not cell_methods:
+            # For backwards compatibility: Empty or null value is equivalent to ().
+            cell_methods = ()
+        else:
+            # Can supply any iterable, which is converted (copied) to a tuple.
+            cell_methods = tuple(cell_methods)
+            for cell_method in cell_methods:
+                # All contents should be CellMethods.  Requiring class membership is
+                # somewhat non-Pythonic, but simple, and not a problem for now.
+                if not isinstance(cell_method, iris.coords.CellMethod):
+                    msg = (
+                        f"Cube.cell_methods assigned value includes {cell_method}, "
+                        "which is not an iris.coords.CellMethod."
+                    )
+                    raise ValueError(msg)
+        self._metadata_manager.cell_methods = cell_methods
 
     def core_data(self):
         """
@@ -4431,7 +4474,7 @@ x            -               -
             air_potential_temperature / (K)     \
 (time: 3; model_level_number: 7; grid_latitude: 204; grid_longitude: 187)
             >>> print(cube.coord('time'))
-            DimCoord :  time / (hours since 1970-01-01 00:00:00, gregorian calendar)
+            DimCoord :  time / (hours since 1970-01-01 00:00:00, standard calendar)
                 points: [2009-11-19 10:00:00, 2009-11-19 11:00:00, 2009-11-19 12:00:00]
                 shape: (3,)
                 dtype: float64
@@ -4444,7 +4487,7 @@ x            -               -
             air_potential_temperature / (K)     \
 (model_level_number: 7; grid_latitude: 204; grid_longitude: 187)
             >>> print(result.coord('time'))
-            DimCoord :  time / (hours since 1970-01-01 00:00:00, gregorian calendar)
+            DimCoord :  time / (hours since 1970-01-01 00:00:00, standard calendar)
                 points: [2009-11-19 10:30:00]
                 shape: (1,)
                 dtype: float64
@@ -4459,7 +4502,7 @@ x            -               -
             air_potential_temperature / (K)     \
 (model_level_number: 7; grid_latitude: 204; grid_longitude: 187)
             >>> print(result2.coord('time'))
-            DimCoord :  time / (hours since 1970-01-01 00:00:00, gregorian calendar)
+            DimCoord :  time / (hours since 1970-01-01 00:00:00, standard calendar)
                 points: [2009-11-19 10:30:00]
                 shape: (1,)
                 dtype: float64
