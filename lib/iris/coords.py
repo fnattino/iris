@@ -2078,7 +2078,7 @@ class Coord(_DimensionalMetadata):
         """
         index = iris.util._build_full_slice_given_keys(index, self.ndim)
 
-        point = tuple(np.array(self.core_points()[index], ndmin=1).flatten())
+        point = tuple(np.atleast_1d(self.core_points()[index]).flatten())
         if len(point) != 1:
             raise IndexError(
                 "The index %s did not uniquely identify a single "
@@ -2087,7 +2087,7 @@ class Coord(_DimensionalMetadata):
 
         bound = None
         if self.has_bounds():
-            bound = tuple(np.array(self.core_bounds()[index], ndmin=1).flatten())
+            bound = tuple(np.atleast_1d(self.core_bounds()[index]).flatten())
 
         if self.units.is_time_reference():
             point = self.units.num2date(point)
