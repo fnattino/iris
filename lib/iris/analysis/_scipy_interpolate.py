@@ -1,7 +1,7 @@
 import itertools
 
 import numpy as np
-from scipy.sparse import csr_matrix
+from sparse import GCXS
 
 # ============================================================================
 # |                        Copyright SciPy                                   |
@@ -218,7 +218,7 @@ class _RegularGridInterpolator:
             n_result_values = len(indices[0])
             n_non_zero = n_result_values * n_src_values_per_result_value
             weights = np.ones(n_non_zero, dtype=norm_distances[0].dtype)
-            col_indices = np.empty(n_non_zero)
+            col_indices = np.empty(n_non_zero, dtype=int)
             row_ptrs = np.arange(
                 0,
                 n_non_zero + n_src_values_per_result_value,
@@ -238,8 +238,9 @@ class _RegularGridInterpolator:
                     weights[i::n_src_values_per_result_value] *= cw
 
             n_src_values = np.prod(list(map(len, self.grid)))
-            sparse_matrix = csr_matrix(
+            sparse_matrix = GCXS(
                 (weights, col_indices, row_ptrs),
+                compressed_axes=[0],
                 shape=(n_result_values, n_src_values),
             )
 
@@ -289,10 +290,10 @@ class _RegularGridInterpolator:
     def _evaluate_linear_sparse(self, sparse_matrix):
         ndim = len(self.grid)
         if ndim == self.values.ndim:
-            result = sparse_matrix * self.values.reshape(-1)
+            result = sparse_matrix @ self.values.reshape(-1)
         else:
             shape = (sparse_matrix.shape[1], -1)
-            result = sparse_matrix * self.values.reshape(shape)
+            result = sparse_matrix @ self.values.reshape(shape)
 
         return result
 
